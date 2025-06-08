@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Country Rankings Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h3 {
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .card p {
+            font-size: 1.1rem;
+            line-height: 1.4;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        select, button {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .rankings-table {
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        tr:hover {
+            background: #e3f2fd;
+            transform: scale(1.01);
+            transition: all 0.3s ease;
+        }
+
+        .rank-cell {
+            font-weight: bold;
+            border-radius: 6px;
+            color: white;
+            min-width: 40px;
+        }
+
+        .rank-1-3 { background: #4caf50; }
+        .rank-4-6 { background: #ff9800; }
+        .rank-7-8 { background: #2196f3; }
+        .rank-9-plus { background: #f44336; }
+
+        .country-name {
+            font-weight: bold;
+            text-align: left;
+        }
+
+        .top-performer {
+            background: linear-gradient(135deg, #4caf50, #8bc34a);
+            color: white;
+        }
+
+        .good-performer {
+            background: linear-gradient(135deg, #2196f3, #03a9f4);
+            color: white;
+        }
+
+        .good-performer .country-name,
+        .good-performer td:last-child {
+            color: black !important;
+        }
+
+        .legend {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏆 Country Rankings Dashboard</h1>
+        
+        <div class="summary-cards">
+            <div class="card">
+                <h3>🥇 Perfect Performance</h3>
+                <p><strong>Malaysia</strong> is the only country in top 8 for ALL 6 variables</p>
+            </div>
+            <div class="card">
+                <h3>⭐ Top Performers</h3>
+                <p><strong>4 countries</strong> rank top 8 in at least 4/6 variables: Malaysia, UAE, Saudi Arabia, Indonesia</p>
+            </div>
+        </div>
+
+        <div class="filters">
+            <select id="sortBy">
+                <option value="country">Sort by Country</option>
+                <option value="performance">Sort by Performance</option>
+            </select>
+            <button onclick="showOnlyTop8()">Show Only Top 8+ Countries</button>
+            <button onclick="showAll()">Show All Countries</button>
+        </div>
+
+        <div class="rankings-table">
+            <table id="rankingsTable">
+                <thead>
+                    <tr>
+                        <th>Country</th>
+                        <th>Real Interest Rate</th>
+                        <th>Inflation</th>
+                        <th>Currency Volatility</th>
+                        <th>GDP Growth</th>
+                        <th>Current Account</th>
+                        <th>FCI % GCF</th>
+                        <th>Top 8 Count</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color rank-1-3"></div>
+                <span>Rank 1-3 (Excellent)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color rank-4-6"></div>
+                <span>Rank 4-6 (Good)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color rank-7-8"></div>
+                <span>Rank 7-8 (Acceptable)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color rank-9-plus"></div>
+                <span>Rank 9+ (Poor)</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const countryData = {
+            "Brazil": [15, 11, 12, 11, 7, 6],
+            "Chile": [6, 9, 9, 12, 15, 4],
+            "Colombia": [14, 12, 10, 6, 13, 5],
+            "Egypt": [3, 14, 15, 3, 9, 1],
+            "Hungary": [2, 13, 2, 9, 14, 7],
+            "India": [10, 10, 5, 2, 8, 13],
+            "Indonesia": [13, 5, 8, 4, 4, 12],
+            "Malaysia": [7, 2, 1, 7, 3, 8],
+            "Mexico": [8, 8, 11, 13, 6, 9],
+            "Philppines": [12, 6, 3, 5, 11, 10],
+            "Saudi Arabia": [4, 4, 6, 10, 1, 11],
+            "South Africa": [11, 7, 13, 15, 5, 2],
+            "Thailand": [5, 3, 4, 14, 10, 14],
+            "Türkiye": [1, 15, 14, 1, 12, 15],
+            "UAE": [9, 1, 7, 8, 2, 3]
+        };
+
+        const variables = [
+            "Real Interest Rate", "Inflation", "Currency Volatility", 
+            "GDP Growth", "Current Account", "FCI % GCF"
+        ];
+
+        function getRankClass(rank) {
+            if (rank <= 3) return 'rank-1-3';
+            if (rank <= 6) return 'rank-4-6';
+            if (rank <= 8) return 'rank-7-8';
+            return 'rank-9-plus';
+        }
+
+        function getTop8Count(ranks) {
+            return ranks.filter(rank => rank <= 8).length;
+        }
+
+        function getRowClass(top8Count) {
+            if (top8Count === 6) return 'top-performer';
+            if (top8Count >= 4) return 'good-performer';
+            return '';
+        }
+
+        function renderTable(sortBy = 'country', filterTop8 = false) {
+            const tbody = document.getElementById('tableBody');
+            let countries = Object.keys(countryData);
+
+            if (sortBy === 'performance') {
+                countries.sort((a, b) => getTop8Count(countryData[b]) - getTop8Count(countryData[a]));
+            } else {
+                countries.sort();
+            }
+
+            if (filterTop8) {
+                countries = countries.filter(country => getTop8Count(countryData[country]) >= 4);
+            }
+
+            tbody.innerHTML = countries.map(country => {
+                const ranks = countryData[country];
+                const top8Count = getTop8Count(ranks);
+                const rowClass = getRowClass(top8Count);
+
+                return `
+                    <tr class="${rowClass}">
+                        <td class="country-name">${country}</td>
+                        ${ranks.map(rank => 
+                            `<td class="rank-cell ${getRankClass(rank)}">${rank}</td>`
+                        ).join('')}
+                        <td style="font-weight: bold; font-size: 1.1rem;">${top8Count}/6</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function showOnlyTop8() {
+            const sortBy = document.getElementById('sortBy').value;
+            renderTable(sortBy, true);
+        }
+
+        function showAll() {
+            const sortBy = document.getElementById('sortBy').value;
+            renderTable(sortBy, false);
+        }
+
+        document.getElementById('sortBy').addEventListener('change', (e) => {
+            renderTable(e.target.value);
+        });
+
+        // Initial render
+        renderTable('performance');
+    </script>
+</body>
+</html>
